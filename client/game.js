@@ -124,13 +124,37 @@ class GameBoard {
                 this.selectedPiece = piece;
                 document.querySelector(`.piece[data-point-id="${pointId}"]`).classList.add('selected');
                 this.highlightValidMoves(pointId);
+                this.log('Piece selected for movement', {
+                    player: this.currentPlayer,
+                    pointId: pointId
+                });
             }
         } else {
-            // Try to move selected piece
-            if (this.isValidMove(pointId) && this.isValidMovement(this.selectedPiece.pointId, pointId)) {
+            // Handle piece movement or deselection
+            if (pointId === this.selectedPiece.pointId) {
+                this.clearSelection();
+                this.log('Piece deselected');
+                return;
+            }
+    
+            const playerPieces = this.placedPieces.filter(p => p.player === this.currentPlayer).length;
+            const canFlyNow = playerPieces === 3;
+    
+            if (this.isValidMove(pointId) && (canFlyNow || this.isValidMovement(this.selectedPiece.pointId, pointId))) {
                 this.movePiece(this.selectedPiece.pointId, pointId);
                 this.clearSelection();
+                
+                // Check win condition
+                if (this.checkWinCondition()) {
+                    this.handleGameWin();
+                    return;
+                }
+                
                 this.updateStatus();
+            } else {
+                // Invalid move, deselect the piece
+                this.clearSelection();
+                this.log('Invalid move, piece deselected');
             }
         }
     }
@@ -143,14 +167,14 @@ class GameBoard {
             5: [3, 6],        6: [5, 7, 14],     7: [4, 6],
 
             // Middle square (8-15)
-            8: [9, 11],       9: [1, 8, 10],     10: [9, 12],
-            11: [3, 8, 13],   12: [4, 10, 15],
-            13: [11, 14],     14: [6, 13, 15],   15: [12, 14],
+            8: [9, 11],       9: [1, 8, 10, 17], 10: [9, 12],
+            11: [3, 8, 13],   12: [4, 10, 15, 20],
+            13: [11, 14],     14: [6, 13, 15, 22], 15: [12, 14],
 
             // Inner square (16-23)
-            16: [17, 19],     17: [16, 18],      18: [17, 20],
-            19: [16, 21],     20: [18, 23],
-            21: [19, 22],     22: [21, 23],      23: [20, 22]
+            16: [17, 19],     17: [9, 16, 18],   18: [17, 20],
+            19: [11, 16, 21], 20: [12, 18, 23],
+            21: [19, 22],     22: [14, 21, 23],  23: [20, 22]
         };
 
         return adjacentPoints[fromId].includes(toId);
@@ -172,6 +196,7 @@ class GameBoard {
             this.waitingForRemoval = true;
             this.highlightMill(newMill);
             this.highlightRemovablePieces();
+            this.updateStatus(); // Add this line
         } else {
             this.switchPlayer();
         }
@@ -190,19 +215,12 @@ class GameBoard {
         boardPositions.forEach((pos, index) => {
             const point = document.createElement('div');
             point.className = 'point';
-            // Add inner-point class for points 16-23
             if (index >= 16) {
                 point.classList.add('inner-point');
             }
             point.style.left = pos.x + '%';
             point.style.top = pos.y + '%';
             point.dataset.pointId = index;
-            
-            const numberDisplay = document.createElement('span');
-            numberDisplay.className = 'point-number';
-            numberDisplay.textContent = index;
-            point.appendChild(numberDisplay);
-            
             pointsContainer.appendChild(point);
         });
     }
@@ -331,6 +349,16 @@ class GameBoard {
         
         if (this.pieces.white === 0 && this.pieces.black === 0) {
             this.phase = 'movement';
+        }
+
+        // Add win condition check here
+        const opponent = this.currentPlayer === 'white' ? 'black' : 'white';
+        const opponentTotalPieces = this.pieces[opponent] + 
+            this.placedPieces.filter(p => p.player === opponent).length;
+        
+        if (opponentTotalPieces < 3) {
+            this.handleGameWin();
+            return false;
         }
 
         const formedMill = this.checkForMill(pointId);
@@ -504,9 +532,9 @@ more     // Add after canRemovePiece method and before the class end
             }
     
             const playerPieces = this.placedPieces.filter(p => p.player === this.currentPlayer).length;
-            const canMove = playerPieces === 3 || this.isValidMovement(this.selectedPiece.pointId, pointId);
+            const canFlyNow = playerPieces === 3;
     
-            if (this.isValidMove(pointId) && canMove) {
+            if (this.isValidMove(pointId) && (canFlyNow || this.isValidMovement(this.selectedPiece.pointId, pointId))) {
                 this.movePiece(this.selectedPiece.pointId, pointId);
                 this.clearSelection();
                 
@@ -517,6 +545,10 @@ more     // Add after canRemovePiece method and before the class end
                 }
                 
                 this.updateStatus();
+            } else {
+                // Invalid move, deselect the piece
+                this.clearSelection();
+                this.log('Invalid move, piece deselected');
             }
         }
     }
@@ -631,6 +663,16 @@ more     // Add after canRemovePiece method and before the class end
         
         if (this.pieces.white === 0 && this.pieces.black === 0) {
             this.phase = 'movement';
+        }
+
+        // Add win condition check here
+        const opponent = this.currentPlayer === 'white' ? 'black' : 'white';
+        const opponentTotalPieces = this.pieces[opponent] + 
+            this.placedPieces.filter(p => p.player === opponent).length;
+        
+        if (opponentTotalPieces < 3) {
+            this.handleGameWin();
+            return false;
         }
 
         const formedMill = this.checkForMill(pointId);
