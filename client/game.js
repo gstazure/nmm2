@@ -459,6 +459,29 @@ more     // Add after canRemovePiece method and before the class end
         }
     }
 
+    // Add these new methods after clearSelection() method
+    
+    highlightValidMoves(pointId) {
+        const points = document.querySelectorAll('.point');
+        const playerPieces = this.placedPieces.filter(p => p.player === this.currentPlayer).length;
+        const canFlyNow = playerPieces === 3;
+    
+        points.forEach(point => {
+            const targetId = parseInt(point.dataset.pointId);
+            if (this.isValidMove(targetId)) {
+                if (canFlyNow || this.isValidMovement(pointId, targetId)) {
+                    point.classList.add('valid-move');
+                }
+            }
+        });
+        this.log(`Highlighted valid moves for piece ${pointId}`, {
+            canFly: canFlyNow,
+            currentPlayer: this.currentPlayer,
+            piecesCount: playerPieces
+        });
+    }
+    
+    // Update handleMovementPhase method
     handleMovementPhase(pointId) {
         if (!this.selectedPiece) {
             // Select piece to move
@@ -467,138 +490,72 @@ more     // Add after canRemovePiece method and before the class end
                 this.selectedPiece = piece;
                 document.querySelector(`.piece[data-point-id="${pointId}"]`).classList.add('selected');
                 this.highlightValidMoves(pointId);
+                this.log('Piece selected for movement', {
+                    player: this.currentPlayer,
+                    pointId: pointId
+                });
             }
         } else {
-            // Try to move selected piece
-            if (this.isValidMove(pointId) && this.isValidMovement(this.selectedPiece.pointId, pointId)) {
+            // Handle piece movement or deselection
+            if (pointId === this.selectedPiece.pointId) {
+                this.clearSelection();
+                this.log('Piece deselected');
+                return;
+            }
+    
+            const playerPieces = this.placedPieces.filter(p => p.player === this.currentPlayer).length;
+            const canMove = playerPieces === 3 || this.isValidMovement(this.selectedPiece.pointId, pointId);
+    
+            if (this.isValidMove(pointId) && canMove) {
                 this.movePiece(this.selectedPiece.pointId, pointId);
                 this.clearSelection();
+                
+                // Check win condition
+                if (this.checkWinCondition()) {
+                    this.handleGameWin();
+                    return;
+                }
+                
                 this.updateStatus();
             }
         }
     }
-
-    isValidMovement(fromId, toId) {
-        const adjacentPoints = {
-            // Outer square (0-7)
-            0: [1, 3],        1: [0, 2, 9],      2: [1, 4],
-            3: [0, 5, 11],    4: [2, 7, 12],
-            5: [3, 6],        6: [5, 7, 14],     7: [4, 6],
-
-            // Middle square (8-15)
-            8: [9, 11],       9: [1, 8, 10],     10: [9, 12],
-            11: [3, 8, 13],   12: [4, 10, 15],
-            13: [11, 14],     14: [6, 13, 15],   15: [12, 14],
-
-            // Inner square (16-23)
-            16: [17, 19],     17: [16, 18],      18: [17, 20],
-            19: [16, 21],     20: [18, 23],
-            21: [19, 22],     22: [21, 23],      23: [20, 22]
-        };
-
-        return adjacentPoints[fromId].includes(toId);
-    }
-
-    movePiece(fromId, toId) {
-        const piece = document.querySelector(`.piece[data-point-id="${fromId}"]`);
-        const toPoint = document.querySelector(`.point[data-point-id="${toId}"]`);
+    
+    checkWinCondition() {
+        const opponent = this.currentPlayer === 'white' ? 'black' : 'white';
+        const opponentPieces = this.placedPieces.filter(p => p.player === opponent).length;
         
-        piece.style.left = toPoint.style.left;
-        piece.style.top = toPoint.style.top;
-        piece.dataset.pointId = toId;
-
-        const pieceIndex = this.placedPieces.findIndex(p => p.pointId === fromId);
-        this.placedPieces[pieceIndex].pointId = toId;
-
-        const newMill = this.checkForMill(toId);
-        if (newMill) {
-            this.waitingForRemoval = true;
-            this.highlightMill(newMill);
-            this.highlightRemovablePieces();
-        } else {
-            this.switchPlayer();
+        // Win if opponent has less than 3 pieces
+        if (opponentPieces < 3) {
+            return true;
         }
-    }
-
-    clearSelection() {
-        this.selectedPiece = null;
-        document.querySelectorAll('.piece.selected').forEach(p => p.classList.remove('selected'));
-        document.querySelectorAll('.point.valid-move').forEach(p => p.classList.remove('valid-move'));
-    }
-
-    initializeBoard() {
-        const pointsContainer = document.querySelector('.points');
-        const boardPositions = this.getBoardPositions();
-
-        boardPositions.forEach((pos, index) => {
-            const point = document.createElement('div');
-            point.className = 'point';
-            // Add inner-point class for points 16-23
-            if (index >= 16) {
-                point.classList.add('inner-point');
-            }
-            point.style.left = pos.x + '%';
-            point.style.top = pos.y + '%';
-            point.dataset.pointId = index;
+        
+        // Check if opponent has any valid moves
+        return !this.placedPieces.some(piece => {
+            if (piece.player !== opponent) return false;
             
-            const numberDisplay = document.createElement('span');
-            numberDisplay.className = 'point-number';
-            numberDisplay.textContent = index;
-            point.appendChild(numberDisplay);
-            
-            pointsContainer.appendChild(point);
+            // For each opponent piece
+            return [...Array(24).keys()].some(targetId => {
+                if (!this.isValidMove(targetId)) return false;
+                
+                // Check if they can move normally or fly
+                const canFly = opponentPieces === 3;
+                return canFly || this.isValidMovement(piece.pointId, targetId);
+            });
         });
     }
-
-    getBoardPositions() {
-        return [
-            // Outer square (0-7)
-            {x: 2, y: 2}, {x: 50, y: 2}, {x: 98, y: 2},      // Top (0,1,2)
-            {x: 2, y: 50}, {x: 98, y: 50},                    // Middle (3,4)
-            {x: 2, y: 98}, {x: 50, y: 98}, {x: 98, y: 98},   // Bottom (5,6,7)
-
-            // Middle square (8-15)
-            {x: 18, y: 18}, {x: 50, y: 18}, {x: 82, y: 18},  // Top (8,9,10)
-            {x: 18, y: 50}, {x: 82, y: 50},                   // Middle (11,12)
-            {x: 18, y: 82}, {x: 50, y: 82}, {x: 82, y: 82},  // Bottom (13,14,15)
-
-            // Inner square (16-23)
-            {x: 34, y: 34}, {x: 50, y: 34}, {x: 66, y: 34},  // Top (16,17,18)
-            {x: 34, y: 50}, {x: 66, y: 50},                   // Middle (19,20)
-            {x: 34, y: 66}, {x: 50, y: 66}, {x: 66, y: 66}   // Bottom (21,22,23)
-        ];
-    }
-
-    defineMillCombinations() {
-        return [
-            // Horizontal mills
-            [0, 1, 2],     // Outer square top
-            [5, 6, 7],     // Outer square bottom
-            [8, 9, 10],    // Middle square top
-            [13, 14, 15],  // Middle square bottom
-            [16, 17, 18],  // Inner square top
-            [21, 22, 23],  // Inner square bottom
-
-            // Vertical mills
-            [0, 3, 5],     // Outer square left
-            [2, 4, 7],     // Outer square right
-            [8, 11, 13],   // Middle square left
-            [10, 12, 15],  // Middle square right
-            [16, 19, 21],  // Inner square left
-            [18, 20, 23],  // Inner square right
-
-            // Cross-square mills
-            [1, 9, 17],    // Top middle vertical
-            [3, 11, 19],   // Left middle vertical
-            [4, 12, 20],   // Right middle vertical
-            [6, 14, 22]    // Bottom middle vertical
-        ];
-    }
-
-    isValidMove(pointId) {
-        // Check if the point is already occupied
-        const isOccupied = this.placedPieces.some(piece => piece.pointId === pointId);
-        return !isOccupied && pointId >= 0 && pointId <= 23;
+    
+    handleGameWin() {
+        const winner = this.currentPlayer;
+        this.phase = 'game-over';
+        this.log('Game Over', {
+            winner: winner,
+            finalState: {
+                whitePieces: this.placedPieces.filter(p => p.player === 'white').length,
+                blackPieces: this.placedPieces.filter(p => p.player === 'black').length
+            }
+        });
+        alert(`Game Over! ${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!`);
     }
 
     addEventListeners() {
