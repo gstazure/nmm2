@@ -1,0 +1,164 @@
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    min-height: 100vh;
+    background-color: #f5f5dc;
+    padding: 20px;
+}
+
+.game-status {
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid #8b4513;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    min-width: 300px;
+}
+
+.piece-counts {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+
+.board {
+    width: 400px;
+    height: 400px;
+    position: relative;
+    border: 2px solid #8b4513;
+}
+
+/* Adjust point size and appearance */
+/* Remove the duplicate .point and .point-number rules at the bottom of the file */
+
+.point {
+    width: 20px;
+    height: 20px;
+    margin: -10px;  /* Center the point on its position */
+    cursor: pointer;
+    position: absolute;
+    z-index: 1;
+}
+
+.inner-point {
+    width: 24px;    /* Slightly larger click area */
+    height: 24px;
+    margin: -12px;  /* Adjust margin to maintain centering */
+}
+
+.point-number {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;  /* Make numbers non-clickable */
+}
+
+/* Remove the second .point-number definition that starts with top: -25px */
+.point-number {
+    position: absolute;
+    top: -25px;
+    left: 0;
+    color: #8b4513;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    pointer-events: none;
+    z-index: 100;
+    width: 20px;
+    text-align: center;
+    background-color: #f5f5dc;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.point.valid-move {
+    background-color: #8b4513;
+    box-shadow: 0 0 5px #4CAF50;
+}
+
+.piece {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.piece.white {
+    background-color: #fff;
+    border: 2px solid #000;
+}
+
+.piece.black {
+    background-color: #000;
+    border: 2px solid #fff;
+}
+
+.piece.in-mill {
+    box-shadow: 0 0 8px #ffd700;
+}
+
+.piece.removable {
+    box-shadow: 0 0 8px #ff4444;
+    cursor: pointer;
+}
+
+/* Draw the three squares */
+.board::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 66.6%;
+    height: 66.6%;
+    border: 2px solid #8b4513;
+}
+
+.board::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 33.3%;
+    height: 33.3%;
+    border: 2px solid #8b4513;
+}
+
+/* Draw the connecting lines */
+.lines {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.vertical-line {
+    position: absolute;
+    width: 2px;
+    height: 33.3%;
+    background-color: #8b4513;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.vertical-line.top { top: 0; }
+.vertical-line.bottom { bottom: 0; }
+
+.horizontal-line {
+    position: absolute;
+    height: 2px;
+    width: 33.3%;
+    background-color: #8b4513;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.horizontal-line.left { left: 0; }
+.horizontal-line.right { right: 0; }
