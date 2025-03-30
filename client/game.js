@@ -61,8 +61,11 @@ class GameBoard {
             'Remove opponent\'s piece' : 
             `Phase: ${this.phase.charAt(0).toUpperCase() + this.phase.slice(1)}`;
 
-        whiteCount.textContent = this.pieces.white;
-        blackCount.textContent = this.pieces.black;
+        const whitePiecesOnBoard = this.placedPieces.filter(p => p.player === 'white').length;
+        const blackPiecesOnBoard = this.placedPieces.filter(p => p.player === 'black').length;
+
+        whiteCount.innerHTML = `White<br><br>Remaining: ${this.pieces.white}<br>On Board: ${whitePiecesOnBoard}`;
+        blackCount.innerHTML = `Black<br><br>Remaining: ${this.pieces.black}<br>On Board: ${blackPiecesOnBoard}`;
     }
 
     // Remove the second defineMillCombinations method (around line 200)
