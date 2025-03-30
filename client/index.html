@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nine Men's Morris</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-status">
+            <div id="player-turn"></div>
+            <div id="game-phase"></div>
+            <div class="piece-counts">
+                <div>White pieces: <span id="white-count">9</span></div>
+                <div>Black pieces: <span id="black-count">9</span></div>
+            </div>
+        </div>
+        <div class="board">
+            <div class="lines">
+                <div class="vertical-line top"></div>
+                <div class="vertical-line bottom"></div>
+                <div class="horizontal-line left"></div>
+                <div class="horizontal-line right"></div>
+            </div>
+            <div class="points"></div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
