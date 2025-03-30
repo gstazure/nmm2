@@ -56,7 +56,7 @@ class GameBoard {
         const whiteCount = document.getElementById('white-count');
         const blackCount = document.getElementById('black-count');
 
-        playerTurn.textContent = `Current Player: ${this.currentPlayer.charAt(0).toUpperCase() + this.currentPlayer.slice(1)}`;
+        playerTurn.innerHTML = `Current Player: <div class="piece ${this.currentPlayer}" style="display: inline-block; width: 15px; height: 15px; margin-bottom: -2px;"></div>`;
         gamePhase.textContent = this.waitingForRemoval ? 
             'Remove opponent\'s piece' : 
             `Phase: ${this.phase.charAt(0).toUpperCase() + this.phase.slice(1)}`;
